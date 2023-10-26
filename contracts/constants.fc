@@ -5,7 +5,9 @@ const int op::request_claim = 0x1c3e2695;
 const int op::admin_jettons_withdrawal = 0x4fa096c8;
 const int op::admin_add_items = 0x256f691;
 const int op::admin_remove_items = 0x5a7add91;
-const int op::admin_change_item_ranks = 0x315f3cb;
+const int op::admin_change_item_ranks = 0x1f0ff53;
+const int op::admin_change_rank_rewards = 0x5e7beb17;
+const int op::admin_delete_rank_rewards = 0x7461c127;
 
 const int op::nft::transfer = 0x5fcc3d14;
 const int op::nft::ownership_assigned = 0x05138d91;

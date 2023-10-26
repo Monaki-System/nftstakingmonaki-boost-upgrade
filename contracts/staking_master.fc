@@ -3,6 +3,7 @@
 #include "constants.fc";
 
 global cell data::items;
+global cell data::rank_rewards;
 global cell data::staked_items;
 global slice data::jetton_master;
 global cell data::jetton_wallet_code;
@@ -157,7 +158,10 @@ cell subtract_dictionaries(cell self, cell other) {
 
         slice jetton_wallet_address = calculate_user_jetton_wallet_address(my_address(), data::jetton_master, data::jetton_wallet_code);
 
-        (slice value, int f?) = data::items.dict_get?(267, item);
+        (slice rank, int f?) = data::items.dict_get?(267, item);
+        
+        (slice value, f?) = data::rank_rewards.dict_get?(267, item);
+
         int daily_reward = value~load_coins();
         int amount = daily_reward * (time_passed / const::day);
 
@@ -228,6 +232,27 @@ cell subtract_dictionaries(cell self, cell other) {
         data::items = subtract_dictionaries(data::items, items);
     }
 
+    elseif (context::op == op::admin_change_item_rank) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+
+        cell items = in_msg_body~load_dict();
+        data::items = merge_dictionaries(data::items, items);
+    }   
+
+    elseif (context::op == op::admin_delete_rank_rewards) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+
+        cell rewards = in_msg_body~load_dict();
+        data::rank_rewards = subtract_dictionaries(data::rank_rewards, rewards);
+    }   
+
+    elseif (context::op == op::admin_change_rank_rewards) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+
+        cell rewards = in_msg_body~load_dict();
+        data::rank_rewards = merge_dictionaries(data::rank_rewards, rewards);
+    }   
+
     else {
         throw(0xffff);
     }
@@ -248,7 +273,8 @@ cell get_staked_items() method_id {
 
 int get_estimated_reward(slice item, int time_passed) method_id {
     load_data();
-    (slice value, int f?) = data::items.dict_get?(267, item);
+    (slice rank, int f?) = data::items.dict_get?(267, item);
+    (slice value, f?) = data::items.dict_get?(267, rank);
     int daily_reward = value~load_coins();
     int amount = daily_reward * (time_passed / const::day);
     return amount;

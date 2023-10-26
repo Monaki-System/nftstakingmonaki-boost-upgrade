@@ -10,4 +10,6 @@ request_claim#1c3e2695 query_id:uint64 return_item:Bool item:MsgAddressInt stake
 admin_jettons_withdrawal#4fa096c8 query_id:uint64 amount:Coins = InternalMsgBody;
 admin_add_items#256f691 query_id:uint64 items:(HashmapE 267 Coins) = InternalMsgBody;
 admin_remove_items#5a7add91 query_id:uint64 items:(HashmapE 267 Coins) = InternalMsgBody;
-admin_change_item_ranks#315f3cb query_id:uint64 items:(HashmapE 267 coins) = InternalMsgBody;
+admin_change_item_ranks#1f0ff53 query_id:uint64 items:(HashmapE 267 Coins) = InternalMsgBody;
+admin_delete_rank_rewards#7461c127 query_id:uint64 items:(HashmapE 267 Coins) = InternalMsgBody;
+admin_change_rank_rewards#5e7beb17 query_id:uint64 items:(HashmapE 267 Coins) = InternalMsgBody;
