@@ -67,15 +67,18 @@ describe('Staking', () => {
 
         // deploy some items and add them to dictionary
         let items = Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigVarUint(4));
+        let rank_rewards = Dictionary.empty(Dictionary.Keys.BigUint(4), Dictionary.Values.BigVarUint(4));
         for (let i = 0; i < 2; i++) {
             const item = (await collection.sendMint(users[0].getSender(), toNano('0.05'), i)).result;
-            items = items.set(item.address, toNano('1') * BigInt(i + 1));
-        }
+            items = items.set(item.address, BigInt(i + 1));
+            rank_rewards = rank_rewards.set(BigInt(i + 1), toNano('1') * BigInt(i + 1));
+        } 
 
         stakingMaster = blockchain.openContract(
             StakingMaster.createFromConfig(
                 {
                     items,
+                    rank_rewards,
                     jettonMaster: jettonMinter.address,
                     jettonWalletCode: codeJettonWallet,
                     helperCode: codeHelper,

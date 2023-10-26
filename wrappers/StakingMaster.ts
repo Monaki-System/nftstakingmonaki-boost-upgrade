@@ -13,6 +13,7 @@ import { StakingHelper } from './StakingHelper';
 
 export type StakingMasterConfig = {
     items: Dictionary<Address, bigint>;
+    rank_rewards: Dictionary<bigint, bigint>;
     jettonMaster: Address;
     jettonWalletCode: Cell;
     helperCode: Cell;
@@ -22,6 +23,7 @@ export type StakingMasterConfig = {
 export function stakingMasterConfigToCell(config: StakingMasterConfig): Cell {
     return beginCell()
         .storeDict(config.items)
+        .storeDict(config.rank_rewards)
         .storeDict(null)
         .storeAddress(config.jettonMaster)
         .storeRef(config.jettonWalletCode)

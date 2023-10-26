@@ -17,6 +17,7 @@ global slice context::sender;
 () load_data() impure {
     slice ds = get_data().begin_parse();
     data::items = ds~load_dict();
+    data::rank_rewards = ds~load_dict();
     data::staked_items = ds~load_dict();
     data::jetton_master = ds~load_msg_addr();
     data::jetton_wallet_code = ds~load_ref();
@@ -27,6 +28,7 @@ global slice context::sender;
 () save_data() impure {
     set_data(begin_cell()
         .store_dict(data::items)
+        .store_dict(data::rank_rewards)
         .store_dict(data::staked_items)
         .store_slice(data::jetton_master)
         .store_ref(data::jetton_wallet_code)
