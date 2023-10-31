@@ -16,9 +16,10 @@ global slice context::sender;
 
 () load_data() impure {
     slice ds = get_data().begin_parse();
-    data::items = ds~load_dict();
-    data::rank_rewards = ds~load_dict();
-    data::staked_items = ds~load_dict();
+    slice dicts = ds~load_ref().begin_parse();
+    data::items = dicts~load_dict();
+    data::rank_rewards = dicts~load_dict();
+    data::staked_items = dicts~load_dict();
     data::jetton_master = ds~load_msg_addr();
     data::jetton_wallet_code = ds~load_ref();
     data::helper_code = ds~load_ref();
@@ -27,9 +28,12 @@ global slice context::sender;
 
 () save_data() impure {
     set_data(begin_cell()
-        .store_dict(data::items)
-        .store_dict(data::rank_rewards)
-        .store_dict(data::staked_items)
+        .store_ref(
+            begin_cell()
+                .store_dict(data::items)
+                .store_dict(data::rank_rewards)
+                .store_dict(data::staked_items)
+            .end_cell())
         .store_slice(data::jetton_master)
         .store_ref(data::jetton_wallet_code)
         .store_ref(data::helper_code)
@@ -132,7 +136,7 @@ cell subtract_dictionaries(cell self, cell other) {
                 failed? = -1;
             }
         }
-        
+        ~dump(failed?);
         if (failed?) {
             send_raw_message(begin_cell()
                 .store_uint(0x18, 6)
@@ -162,7 +166,7 @@ cell subtract_dictionaries(cell self, cell other) {
 
         (slice rank, int f?) = data::items.dict_get?(267, item);
         
-        (slice value, f?) = data::rank_rewards.dict_get?(267, item);
+        (slice value, f?) = data::rank_rewards.dict_get?(267, rank);
 
         int daily_reward = value~load_coins();
         int amount = daily_reward * (time_passed / const::day);
@@ -234,7 +238,7 @@ cell subtract_dictionaries(cell self, cell other) {
         data::items = subtract_dictionaries(data::items, items);
     }
 
-    elseif (context::op == op::admin_change_item_rank) {
+    elseif (context::op == op::admin_change_item_ranks) {
         throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
 
         cell items = in_msg_body~load_dict();

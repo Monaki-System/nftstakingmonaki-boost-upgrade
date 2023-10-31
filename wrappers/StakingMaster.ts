@@ -22,9 +22,12 @@ export type StakingMasterConfig = {
 
 export function stakingMasterConfigToCell(config: StakingMasterConfig): Cell {
     return beginCell()
-        .storeDict(config.items)
-        .storeDict(config.rank_rewards)
-        .storeDict(null)
+        .storeRef(
+        beginCell()
+            .storeDict(config.items)
+            .storeDict(config.rank_rewards)
+            .storeDict(null)
+        .endCell())
         .storeAddress(config.jettonMaster)
         .storeRef(config.jettonWalletCode)
         .storeRef(config.helperCode)

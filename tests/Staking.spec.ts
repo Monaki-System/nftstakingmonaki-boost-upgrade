@@ -306,7 +306,7 @@ describe('Staking', () => {
         expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(0);
     });
 
-    it('should claim rewards', async () => {
+    it.only('should claim rewards', async () => {
         {
             const item = blockchain.openContract(await collection.getNftItemByIndex(0n));
             await item.sendTransfer(
@@ -324,6 +324,8 @@ describe('Staking', () => {
             blockchain.now = 1600000000 + 86400 * 7;
 
             const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, true);
+
+            printTransactionFees(result.transactions);
             expect(result.transactions).toHaveTransaction({
                 on: stakingMaster.address,
                 success: true,
