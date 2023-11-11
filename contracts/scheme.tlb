@@ -1,4 +1,8 @@
-_ items:(HashmapE 267 Coins) staked_items:(HashmapE 267 MsgAddressInt) jetton_master:MsgAddressInt jetton_wallet_code:^Cell helper_code:^Cell admin:MsgAddressInt = StakingMasterStorage;
+_ common_reward:Coins boost_reward:Coins = Reward
+
+_ nft_count:uint16 start_from:uint64 extra_reward:Coins = UserData;
+
+_ items:(HashmapE 267 uint16) Rarity:(HashmapE 16 Reward) Users:(HashmapE 267 UserData) staked_items:(HashmapE 267 MsgAddressInt) jetton_master:MsgAddressInt jetton_wallet_code:^Cell helper_code:^Cell admin:MsgAddressInt = StakingMasterStorage;
 _ master:MsgAddressInt item:MsgAddressInt staker:MsgAddressInt staked_at:uint64 claimed_at:uint64 option:uint8 = StakingHelperStorage;
 
 stake#429c67c7 option:uint8 = ForwardPayload;
