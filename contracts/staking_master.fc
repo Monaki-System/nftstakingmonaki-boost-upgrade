@@ -10,6 +10,7 @@ global slice data::jetton_master;
 global cell data::jetton_wallet_code;
 global cell data::helper_code;
 global slice data::admin;
+global int data::valid_until;
 
 global int context::op;
 global int context::query_id;
@@ -26,6 +27,7 @@ global slice context::sender;
     data::jetton_wallet_code = ds~load_ref();
     data::helper_code = ds~load_ref();
     data::admin = ds~load_msg_addr();
+    data::valid_until = ds~load_uint(64);
 }
 
 () save_data() impure {
@@ -40,6 +42,7 @@ global slice context::sender;
         .store_ref(data::jetton_wallet_code)
         .store_ref(data::helper_code)
         .store_slice(data::admin)
+        .store_uint(data::valid_until, 64)
     .end_cell());
 }
 
@@ -169,6 +172,9 @@ cell subtract_dictionaries(cell self, cell other) {
             (_, int f?) = data::items.dict_get?(267, context::sender);
             option = forward_payload~load_uint(8);
             stake? = (op == op::stake) & f? & ((option == 7) | (option == 14) | (option == 30));
+        }
+        if (now() > data::valid_until) {
+            stake? = 0;
         }
         int failed? = ~ stake?;
         
@@ -351,6 +357,26 @@ cell subtract_dictionaries(cell self, cell other) {
 
         cell items = in_msg_body~load_dict();
         data::items = subtract_dictionaries(data::items, items);
+    }
+
+    elseif (context::op == op::admin_add_rarity) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+
+        cell rarity = in_msg_body~load_dict();
+        data::rarity = merge_dictionaries(data::rarity, rarity);
+    }
+
+    elseif (context::op == op::admin_remove_rarity) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+
+        cell rarity = in_msg_body~load_dict();
+        data::rarity = subtract_dictionaries(data::rarity, rarity);
+    }
+
+    elseif(context::op == op::admin_change_valid_until) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+
+        data::valid_until = in_msg_body~load_uint(64);
     }
 
     else {

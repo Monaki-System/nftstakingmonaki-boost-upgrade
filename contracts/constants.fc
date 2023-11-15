@@ -3,8 +3,11 @@ const int op::process_stake = 0x654c3af3;
 const int op::claim = 0x75938797;
 const int op::request_claim = 0x1c3e2695;
 const int op::admin_jettons_withdrawal = 0x4fa096c8;
-const int op::admin_add_items = 0x256f691;
-const int op::admin_remove_items = 0x5a7add91;
+const int op::admin_add_items = 0x6d9a7414;
+const int op::admin_remove_items = 0x6d42583f;
+const int op::admin_add_rarity = 0xcd2899a;
+const int op::admin_remove_rarity = 0x487a18c8;
+const int op::admin_change_valid_until = 0x58fe0363;
 
 const int op::nft::transfer = 0x5fcc3d14;
 const int op::nft::ownership_assigned = 0x05138d91;
