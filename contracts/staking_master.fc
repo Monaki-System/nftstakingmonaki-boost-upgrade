@@ -88,7 +88,7 @@ cell subtract_dictionaries(cell self, cell other) {
     return self;
 }
 
-() add_nft_count(int rare, slice user) {
+() add_nft_count(int rare, slice user) impure {
     if (rare > 2) {
         return ();
     }
@@ -102,48 +102,55 @@ cell subtract_dictionaries(cell self, cell other) {
             .store_uint(0, 64)
             .store_coins(0)
         .end_cell().begin_parse());
+        data = begin_cell()
+            .store_uint(0, 16)
+            .store_uint(0, 64)
+            .store_coins(0)
+            .store_uint(0, 16)
+            .store_uint(0, 64)
+            .store_coins(0)
+        .end_cell().begin_parse();
+    }
+    int nft_count = data~load_uint(16);
+    int start_from = data~load_uint(64);
+    int extra_reward = data~load_coins();
+    (slice reward, int f?) = data::rarity.dict_get?(16, begin_cell().store_uint(rare, 16).end_cell().begin_parse());
+    int common_reward = reward~load_coins();
+    int boost_reward = reward~load_coins();
+    if (rare == 1) {
+        if (nft_count == 9) {
+            start_from = now();
+        } elseif (nft_count >= 10) {
+            extra_reward += (now() - start_from) * boost_reward * nft_count;
+        }
+        data = begin_cell()
+            .store_uint(nft_count + 1, 16)
+            .store_uint(start_from, 64)
+            .store_coins(extra_reward)
+            .store_slice(data)
+        .end_cell().begin_parse();
+        data::users~dict_set(267, user, data);
     } else {
+        slice new_data = begin_cell()
+            .store_uint(nft_count, 16)
+            .store_uint(start_from, 64)
+            .store_coins(extra_reward)
+        .end_cell().begin_parse();
         int nft_count = data~load_uint(16);
         int start_from = data~load_uint(64);
         int extra_reward = data~load_coins();
-        (slice reward, int f?) = data::rarity.dict_get?(16, begin_cell().store_uint(rare, 16).end_cell().begin_parse());
-        int common_reward = reward~load_coins();
-        int boost_reward = reward~load_coins();
-        if (rare == 1) {
-            if (nft_count == 9) {
-                start_from = now();
-            } elseif (nft_count >= 10) {
-                extra_reward += (now() - start_from) * boost_reward * nft_count;
-            }
-            data = begin_cell()
-                .store_uint(nft_count + 1, 16)
-                .store_uint(start_from, 64)
-                .store_coins(extra_reward)
-                .store_slice(data)
-            .end_cell().begin_parse();
-            data::users~dict_set(267, user, data);
-        } else {
-            slice new_data = begin_cell()
-                .store_uint(nft_count, 16)
-                .store_uint(start_from, 64)
-                .store_coins(extra_reward)
-            .end_cell().begin_parse();
-            int nft_count = data~load_uint(16);
-            int start_from = data~load_uint(64);
-            int extra_reward = data~load_coins();
-            if (nft_count == 9) {
-                start_from = now();
-            } elseif (nft_count >= 10) {
-                extra_reward += (now() - start_from) * boost_reward * nft_count;
-            }
-            data = begin_cell()
-                .store_slice(new_data)
-                .store_uint(nft_count + 1, 16)
-                .store_uint(start_from, 64)
-                .store_coins(extra_reward)
-            .end_cell().begin_parse();
-            data::users~dict_set(267, user, data);
+        if (nft_count == 9) {
+            start_from = now();
+        } elseif (nft_count >= 10) {
+            extra_reward += (now() - start_from) * boost_reward * nft_count;
         }
+        data = begin_cell()
+            .store_slice(new_data)
+            .store_uint(nft_count + 1, 16)
+            .store_uint(start_from, 64)
+            .store_coins(extra_reward)
+        .end_cell().begin_parse();
+        data::users~dict_set(267, user, data);
     }
 }
 
@@ -181,7 +188,8 @@ cell subtract_dictionaries(cell self, cell other) {
         if (stake?) {
             if (msg_value >= 150000000) {
                 (slice rare, int f?) = data::items.dict_get?(267, context::sender);
-                add_nft_count(rare~load_uint(16), prev_owner);
+                int rare = rare~load_uint(16);
+                add_nft_count(rare, prev_owner);
                 (cell stateinit, slice address) = get_stateinit_and_address_of_helper(context::sender);
                 send_raw_message(begin_cell()
                     .store_uint(0x18, 6)
@@ -226,7 +234,6 @@ cell subtract_dictionaries(cell self, cell other) {
         slice staker = in_msg_body~load_msg_addr();
         int option = in_msg_body~load_uint(8);
         int time_passed = in_msg_body~load_uint(64);
-
         (_, slice address) = get_stateinit_and_address_of_helper(item);
 
         throw_unless(error::wrong_sender, equal_slices(context::sender, address));
@@ -260,8 +267,12 @@ cell subtract_dictionaries(cell self, cell other) {
             }
             extra_amount = extra_reward;
             extra_reward = 0;
+            int f = 0;
+            if (return_item) {
+                f = -1;
+            }
             data = begin_cell()
-                .store_uint(nft_count - 1 + (~ return_item), 16)
+                .store_uint(nft_count + f, 16)
                 .store_uint(start_from, 64)
                 .store_coins(extra_reward)
                 .store_slice(data)
@@ -288,9 +299,13 @@ cell subtract_dictionaries(cell self, cell other) {
             }
             extra_amount = extra_reward;
             extra_reward = 0;
+            int f = 0;
+            if (return_item) {
+                f = -1;
+            }
             data = begin_cell()
                 .store_slice(new_data)
-                .store_uint(nft_count - 1 + (~ return_item), 16)
+                .store_uint(nft_count + f, 16)
                 .store_uint(start_from, 64)
                 .store_coins(extra_reward)
             .end_cell().begin_parse();

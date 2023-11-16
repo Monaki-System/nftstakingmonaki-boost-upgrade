@@ -1,6 +1,6 @@
 import { Blockchain, SandboxContract, TreasuryContract, printTransactionFees } from '@ton/sandbox';
 import { Cell, Dictionary, beginCell, toNano } from '@ton/core';
-import { StakingMaster } from '../wrappers/StakingMaster';
+import { StakingMaster, createRewardValue } from '../wrappers/StakingMaster';
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
 import { JettonMinter } from '../wrappers/JettonMinter';
@@ -66,20 +66,25 @@ describe('Staking', () => {
         await collection.sendDeploy(users[0].getSender(), toNano('0.05'));
 
         // deploy some items and add them to dictionary
-        let items = Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigVarUint(4));
+        let items = Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16));
+        let rarity = Dictionary.empty(Dictionary.Keys.BigUint(16), createRewardValue());
         for (let i = 0; i < 2; i++) {
             const item = (await collection.sendMint(users[0].getSender(), toNano('0.05'), i)).result;
-            items = items.set(item.address, toNano('1') * BigInt(i + 1));
+            items = items.set(item.address, BigInt(i + 1));
         }
+        rarity = rarity.set(BigInt(1), { commonReward: toNano('1'), boostReward: toNano('2') });
+        rarity = rarity.set(BigInt(2), { commonReward: toNano('2'), boostReward: toNano('4') });
 
         stakingMaster = blockchain.openContract(
             StakingMaster.createFromConfig(
                 {
                     items,
+                    rarity,
                     jettonMaster: jettonMinter.address,
                     jettonWalletCode: codeJettonWallet,
                     helperCode: codeHelper,
                     admin: users[0].address,
+                    validUntil: 2000000000n,
                 },
                 codeMaster
             )
@@ -640,7 +645,6 @@ describe('Staking', () => {
         expect((await stakingMaster.getItemsStakedByUser(users[0].address))[0]).toEqualAddress(item.address);
 
         blockchain.now = 1600000000 + 86400 * 30 - 1;
-
         {
             const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
             expect(result.transactions).toHaveTransaction({
@@ -651,7 +655,6 @@ describe('Staking', () => {
         }
 
         blockchain.now = 1600000000 + 86400 * 30;
-
         {
             const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
             expect(result.transactions).toHaveTransaction({
@@ -670,7 +673,6 @@ describe('Staking', () => {
         }
 
         blockchain.now = 1600000000 + 86400 * (30 + 1);
-
         {
             const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
             expect(result.transactions).toHaveTransaction({
@@ -689,7 +691,6 @@ describe('Staking', () => {
         }
 
         blockchain.now = 1600000000 + 86400 * (30 + 5);
-
         {
             const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
             expect(result.transactions).toHaveTransaction({
@@ -708,7 +709,6 @@ describe('Staking', () => {
         }
 
         blockchain.now = 1600000000 + 86400 * (30 + 36);
-
         {
             const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
             expect(result.transactions).toHaveTransaction({
