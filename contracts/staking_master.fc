@@ -244,12 +244,13 @@ cell subtract_dictionaries(cell self, cell other) {
         int nft_count = data~load_uint(16);
         int start_from = data~load_uint(64);
         int extra_reward = data~load_coins();
+        int extra_amount = extra_reward;
         if (rare > 2) {
-            extra_reward = 0;
+            extra_amount = 0;
         }
 
         elseif (rare == 1) {
-            if ((nft_count == 10) & (return_item == 0)) {
+            if ((nft_count == 10) & (return_item == 1)) {
                 start_from = 0;
             } elseif ((nft_count >= 11) | ((nft_count >= 10) & (return_item == 1))) {
                 extra_reward += (now() - start_from) * boost_reward * nft_count;
@@ -257,8 +258,10 @@ cell subtract_dictionaries(cell self, cell other) {
             if (return_item == 0) {
                 start_from = now();
             }
+            extra_amount = extra_reward;
+            extra_reward = 0;
             data = begin_cell()
-                .store_uint(nft_count - 1, 16)
+                .store_uint(nft_count - 1 + (~ return_item), 16)
                 .store_uint(start_from, 64)
                 .store_coins(extra_reward)
                 .store_slice(data)
@@ -275,7 +278,7 @@ cell subtract_dictionaries(cell self, cell other) {
             int nft_count = data~load_uint(16);
             int start_from = data~load_uint(64);
             int extra_reward = data~load_coins();
-            if ((nft_count == 10) & (return_item == 0)) {
+            if ((nft_count == 10) & (return_item == 1)) {
                 start_from = 0;
             } elseif ((nft_count >= 11) | ((nft_count >= 10) & (return_item == 1))) {
                 extra_reward += (now() - start_from) * boost_reward * nft_count;
@@ -283,9 +286,11 @@ cell subtract_dictionaries(cell self, cell other) {
             if (return_item == 0) {
                 start_from = now();
             }
+            extra_amount = extra_reward;
+            extra_reward = 0;
             data = begin_cell()
                 .store_slice(new_data)
-                .store_uint(nft_count - 1, 16)
+                .store_uint(nft_count - 1 + (~ return_item), 16)
                 .store_uint(start_from, 64)
                 .store_coins(extra_reward)
             .end_cell().begin_parse();
