@@ -122,6 +122,7 @@ cell subtract_dictionaries(cell self, cell other) {
             start_from = now();
         } elseif (nft_count >= 10) {
             extra_reward += (now() - start_from) * boost_reward * nft_count;
+            start_from = now();
         }
         data = begin_cell()
             .store_uint(nft_count + 1, 16)
@@ -143,6 +144,7 @@ cell subtract_dictionaries(cell self, cell other) {
             start_from = now();
         } elseif (nft_count >= 10) {
             extra_reward += (now() - start_from) * boost_reward * nft_count;
+            start_from = now();
         }
         data = begin_cell()
             .store_slice(new_data)
@@ -252,13 +254,13 @@ cell subtract_dictionaries(cell self, cell other) {
         int start_from = data~load_uint(64);
         int extra_reward = data~load_coins();
         int extra_amount = extra_reward;
-
         if (rare > 2) {
             extra_amount = 0;
         }
         elseif (rare == 1) {
             if (nft_count >= 10) {
                 extra_reward += (now() - start_from) * boost_reward * nft_count;
+                start_from = now();
             } 
             if ((nft_count == 10) & (return_item == -1)) {
                 start_from = 0;
@@ -292,6 +294,7 @@ cell subtract_dictionaries(cell self, cell other) {
             int extra_reward = data~load_coins();
             if (nft_count >= 10) {
                 extra_reward += (now() - start_from) * boost_reward * nft_count;
+                start_from = now();
             } 
             if ((nft_count == 10) & (return_item == -1)) {
                 start_from = 0;

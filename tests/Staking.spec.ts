@@ -849,4 +849,64 @@ describe('Staking', () => {
             expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(1);
         }
     });
+
+    it('should claim rewards with boost (11 nft)', async () => {
+        {
+            for (let i = 9; i <= 19; i++) {
+                const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(i)));
+                await item.sendTransfer(
+                    users[0].getSender(),
+                    toNano('0.2'),
+                    stakingMaster.address,
+                    beginCell().storeUint(0x429c67c7, 32).storeUint(7, 8).endCell(),
+                    toNano('0.15')
+                );
+            }
+
+            blockchain.now = 1600000000 + 86400 * 7;
+
+            const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(9)));
+            const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
+            const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, true);
+            expect(result.transactions).toHaveTransaction({
+                on: stakingMaster.address,
+                success: true,
+            });
+
+            expect(
+                await blockchain
+                    .openContract(
+                        JettonWallet.createFromAddress(await jettonMinter.getWalletAddressOf(users[0].address))
+                    )
+                    .getJettonBalance()
+            ).toEqual(toNano('7') + toNano('0.001') * BigInt(86400 * 7) * 11n);
+            expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(10);
+
+            blockchain.now = 1600000000 + 86400 * 7 + 86400 * 7;
+
+            for (let i = 10; i <= 19; i++) {
+                const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(i)));
+                const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
+                const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, true);
+                expect(result.transactions).toHaveTransaction({
+                    on: stakingMaster.address,
+                    success: true,
+                });
+            }
+
+            expect(
+                await blockchain
+                    .openContract(
+                        JettonWallet.createFromAddress(await jettonMinter.getWalletAddressOf(users[0].address))
+                    )
+                    .getJettonBalance()
+            ).toEqual(
+                toNano('7') +
+                    toNano('0.001') * BigInt(86400 * 7) * 11n +
+                    toNano('7') * 10n +
+                    toNano('0.001') * BigInt(86400 * 7) * 10n
+            );
+            expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(0);
+        }
+    });
 });
