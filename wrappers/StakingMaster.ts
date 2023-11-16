@@ -1,32 +1,91 @@
 import {
     Address,
     beginCell,
+    Builder,
     Cell,
     Contract,
     contractAddress,
     ContractProvider,
     Dictionary,
+    DictionaryValue,
     Sender,
     SendMode,
+    Slice,
 } from '@ton/core';
 import { StakingHelper } from './StakingHelper';
 
+export type Reward = {
+    commonReward: bigint;
+    boostReward: bigint;
+};
+
+export type UserData = {
+    firstNftCount: bigint;
+    firstStartFrom: bigint;
+    firstExtraReward: bigint;
+    secondNftCount: bigint;
+    secondStartFrom: bigint;
+    secondExtraReward: bigint;
+};
+
 export type StakingMasterConfig = {
     items: Dictionary<Address, bigint>;
+    rarity: Dictionary<bigint, Reward>;
     jettonMaster: Address;
     jettonWalletCode: Cell;
     helperCode: Cell;
     admin: Address;
+    validUntil: bigint;
 };
+
+export function createRewardValue(): DictionaryValue<Reward> {
+    return {
+        parse: (src: Slice): Reward => {
+            return {
+                commonReward: src.loadCoins(),
+                boostReward: src.loadCoins(),
+            };
+        },
+        serialize: (src: Reward, dest: Builder) => {
+            dest.storeCoins(src.commonReward);
+            dest.storeCoins(src.boostReward);
+        },
+    };
+}
+
+export function createUserDataValue(): DictionaryValue<UserData> {
+    return {
+        parse: (src: Slice): UserData => {
+            return {
+                firstNftCount: src.loadUintBig(16),
+                firstStartFrom: src.loadUintBig(64),
+                firstExtraReward: src.loadCoins(),
+                secondNftCount: src.loadUintBig(16),
+                secondStartFrom: src.loadUintBig(64),
+                secondExtraReward: src.loadCoins(),
+            };
+        },
+        serialize: (src: UserData, dest: Builder) => {
+            dest.storeUint(src.firstNftCount, 16);
+            dest.storeUint(src.firstStartFrom, 64);
+            dest.storeCoins(src.firstExtraReward);
+            dest.storeUint(src.secondNftCount, 16);
+            dest.storeUint(src.secondStartFrom, 64);
+            dest.storeCoins(src.secondExtraReward);
+        },
+    };
+}
 
 export function stakingMasterConfigToCell(config: StakingMasterConfig): Cell {
     return beginCell()
-        .storeDict(config.items)
-        .storeDict(null)
+        .storeRef(
+            beginCell().storeDict(config.items).storeDict(config.rarity).storeDict(null).storeDict(null).endCell()
+        )
         .storeAddress(config.jettonMaster)
         .storeRef(config.jettonWalletCode)
         .storeRef(config.helperCode)
         .storeAddress(config.admin)
+        .storeUint(config.validUntil, 64)
         .endCell();
 }
 
@@ -75,7 +134,7 @@ export class StakingMaster implements Contract {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(0x256f691, 32).storeUint(queryId, 64).storeDict(items).endCell(),
+            body: beginCell().storeUint(0x6d9a7414, 32).storeUint(queryId, 64).storeDict(items).endCell(),
         });
     }
 
@@ -93,7 +152,49 @@ export class StakingMaster implements Contract {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(0x5a7add91, 32).storeUint(queryId, 64).storeDict(itemsDict).endCell(),
+            body: beginCell().storeUint(0x6d42583f, 32).storeUint(queryId, 64).storeDict(itemsDict).endCell(),
+        });
+    }
+
+    async sendAdminAddRarity(
+        provider: ContractProvider,
+        via: Sender,
+        value: bigint,
+        queryId: bigint,
+        rarity: Dictionary<Address, Reward>
+    ) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(0xcd2899a, 32).storeUint(queryId, 64).storeDict(rarity).endCell(),
+        });
+    }
+
+    async sendAdminRemoveRarity(
+        provider: ContractProvider,
+        via: Sender,
+        value: bigint,
+        queryId: bigint,
+        rarity: Dictionary<Address, Reward>
+    ) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(0x487a18c8, 32).storeUint(queryId, 64).storeDict(rarity).endCell(),
+        });
+    }
+
+    async sendAdminChangeValidUntil(
+        provider: ContractProvider,
+        via: Sender,
+        value: bigint,
+        queryId: bigint,
+        validUntil: bigint
+    ) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(0x58fe0363, 32).storeUint(queryId, 64).storeUint(validUntil, 64).endCell(),
         });
     }
 
@@ -143,5 +244,26 @@ export class StakingMaster implements Contract {
         } else {
             return Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigVarUint(4));
         }
+    }
+
+    async getDictionaries(provider: ContractProvider): Promise<{
+        items: Dictionary<Address, bigint>;
+        rarity: Dictionary<bigint, Reward>;
+        users: Dictionary<Address, UserData>;
+        stakedItems: Dictionary<Address, Address>;
+    }> {
+        const result = (await provider.get('get_dictionaries', [])).stack;
+        return {
+            items: result
+                .readCell()
+                .beginParse()
+                .loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16)),
+            rarity: result.readCell().beginParse().loadDictDirect(Dictionary.Keys.BigUint(16), createRewardValue()),
+            users: result.readCell().beginParse().loadDictDirect(Dictionary.Keys.Address(), createUserDataValue()),
+            stakedItems: result
+                .readCell()
+                .beginParse()
+                .loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.Address()),
+        };
     }
 }
