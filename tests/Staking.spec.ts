@@ -68,11 +68,16 @@ describe('Staking', () => {
         // deploy some items and add them to dictionary
         let items = Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16));
         let rarity = Dictionary.empty(Dictionary.Keys.BigUint(16), createRewardValue());
-        for (let i = 0; i < 2; i++) {
-            const item = (await collection.sendMint(users[0].getSender(), toNano('0.05'), i)).result;
-            items = items.set(item.address, BigInt(i + 1));
+        for (let i = 0; i < 20; i++) {
+            const item = (await collection.sendMint(users[0].getSender(), toNano('1'), i)).result;
+            if (i == 1) {
+                items = items.set(item.address, BigInt(2));
+                continue;
+            }
+            items = items.set(item.address, BigInt(1));
         }
-        rarity = rarity.set(BigInt(1), { commonReward: toNano('1'), boostReward: toNano('2') });
+
+        rarity = rarity.set(BigInt(1), { commonReward: toNano('1'), boostReward: toNano('0.001') });
         rarity = rarity.set(BigInt(2), { commonReward: toNano('2'), boostReward: toNano('4') });
 
         stakingMaster = blockchain.openContract(
@@ -84,7 +89,7 @@ describe('Staking', () => {
                     jettonWalletCode: codeJettonWallet,
                     helperCode: codeHelper,
                     admin: users[0].address,
-                    validUntil: 2000000000n,
+                    validUntil: 1800000000n,
                 },
                 codeMaster
             )
@@ -105,7 +110,7 @@ describe('Staking', () => {
             toNano('0.05'),
             toNano('0.1'),
             stakingMaster.address,
-            toNano('1000')
+            toNano('10000000000')
         );
     });
 
@@ -115,17 +120,17 @@ describe('Staking', () => {
     });
 
     it('should add more items by admin', async () => {
-        expect((await stakingMaster.getItems()).keys()).toHaveLength(2);
+        expect((await stakingMaster.getItems()).keys()).toHaveLength(20);
 
         const result = await stakingMaster.sendAdminAddItems(
             users[0].getSender(),
             toNano('0.05'),
             123n,
-            Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigVarUint(4)).set(
+            Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16)).set(
                 (
-                    await collection.sendMint(users[0].getSender(), toNano('0.05'), 2)
+                    await collection.sendMint(users[0].getSender(), toNano('0.05'), 20)
                 ).result.address,
-                toNano('0.2')
+                1n
             )
         );
 
@@ -134,15 +139,15 @@ describe('Staking', () => {
             to: stakingMaster.address,
             success: true,
         });
-        expect((await stakingMaster.getItems()).keys()).toHaveLength(3);
+        expect((await stakingMaster.getItems()).keys()).toHaveLength(21);
     });
 
     it('should remove items by admin', async () => {
-        expect((await stakingMaster.getItems()).keys()).toHaveLength(2);
+        expect((await stakingMaster.getItems()).keys()).toHaveLength(20);
 
         const result = await stakingMaster.sendAdminRemoveItems(
             users[0].getSender(),
-            toNano('0.05'),
+            toNano('0.10'),
             123n,
             (await stakingMaster.getItems()).keys()
         );
@@ -246,7 +251,7 @@ describe('Staking', () => {
 
     it('should not stake items not from dict', async () => {
         const item = blockchain.openContract(
-            (await collection.sendMint(users[0].getSender(), toNano('0.05'), 2)).result
+            (await collection.sendMint(users[0].getSender(), toNano('0.05'), 20)).result
         );
 
         const result = await item.sendTransfer(
@@ -741,6 +746,107 @@ describe('Staking', () => {
                     .getJettonBalance()
             ).toEqual(toNano('66'));
             expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(0);
+        }
+    });
+
+    it('should claim rewards with boost', async () => {
+        {
+            for (let i = 9; i < 19; i++) {
+                const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(i)));
+                await item.sendTransfer(
+                    users[0].getSender(),
+                    toNano('0.2'),
+                    stakingMaster.address,
+                    beginCell().storeUint(0x429c67c7, 32).storeUint(7, 8).endCell(),
+                    toNano('0.15')
+                );
+            }
+
+            blockchain.now = 1600000000 + 86400 * 7;
+
+            for (let i = 9; i < 18; i++) {
+                const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(i)));
+                const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
+                const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
+                expect(result.transactions).toHaveTransaction({
+                    on: stakingMaster.address,
+                    success: true,
+                });
+            }
+
+            const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(18)));
+            const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
+            const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, true);
+            expect(result.transactions).toHaveTransaction({
+                on: stakingMaster.address,
+                success: true,
+            });
+
+            blockchain.now = 1600000000 + 86400 * 7 + 86400 * 7;
+
+            expect(
+                await blockchain
+                    .openContract(
+                        JettonWallet.createFromAddress(await jettonMinter.getWalletAddressOf(users[0].address))
+                    )
+                    .getJettonBalance()
+            ).toEqual(toNano('7') * 10n + toNano('0.001') * BigInt(86400 * 7) * 10n);
+            expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(9);
+
+            for (let i = 9; i < 18; i++) {
+                const item = blockchain.openContract(await collection.getNftItemByIndex(BigInt(i)));
+                const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
+                const result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, true);
+                expect(result.transactions).toHaveTransaction({
+                    on: stakingMaster.address,
+                    success: true,
+                });
+            }
+
+            expect(
+                await blockchain
+                    .openContract(
+                        JettonWallet.createFromAddress(await jettonMinter.getWalletAddressOf(users[0].address))
+                    )
+                    .getJettonBalance()
+            ).toEqual(toNano('7') * 10n + toNano('0.001') * BigInt(86400 * 7) * 10n + toNano('7') * 9n);
+            expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(0);
+        }
+    });
+
+    it('should not stake items (valid until)', async () => {
+        {
+            blockchain.now = 1800000001;
+            let item = blockchain.openContract(await collection.getNftItemByIndex(0n));
+
+            let result = await item.sendTransfer(
+                users[0].getSender(),
+                toNano('0.4'),
+                stakingMaster.address,
+                beginCell().storeUint(0x429c67c7, 32).storeUint(7, 8).endCell(),
+                toNano('0.15')
+            );
+
+            expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(0);
+
+            result = await stakingMaster.sendAdminChangeValidUntil(
+                users[0].getSender(),
+                toNano('0.05'),
+                123n,
+                1800000010n
+            );
+
+            item = blockchain.openContract(await collection.getNftItemByIndex(1n));
+
+            result = await item.sendTransfer(
+                users[0].getSender(),
+                toNano('0.4'),
+                stakingMaster.address,
+                beginCell().storeUint(0x429c67c7, 32).storeUint(7, 8).endCell(),
+                toNano('0.15')
+            );
+
+            expect((await stakingMaster.getStakedItems()).keys()).toHaveLength(1);
         }
     });
 });

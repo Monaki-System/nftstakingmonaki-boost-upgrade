@@ -55,6 +55,12 @@ global slice context::sender;
 
         time_passed = now() - data::claimed_at;
 
+        if (data::option == 7) {
+            time_passed = data::option * const::day;
+        } elseif (data::option == 14) {
+            time_passed = data::option * const::day;
+        }
+
         int return_item = in_msg_body~load_int(1);
 
         send_raw_message(begin_cell()

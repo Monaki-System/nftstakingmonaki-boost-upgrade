@@ -252,15 +252,16 @@ cell subtract_dictionaries(cell self, cell other) {
         int start_from = data~load_uint(64);
         int extra_reward = data~load_coins();
         int extra_amount = extra_reward;
+
         if (rare > 2) {
             extra_amount = 0;
         }
-
         elseif (rare == 1) {
-            if ((nft_count == 10) & (return_item == 1)) {
-                start_from = 0;
-            } elseif ((nft_count >= 11) | ((nft_count >= 10) & (return_item == 1))) {
+            if (nft_count >= 10) {
                 extra_reward += (now() - start_from) * boost_reward * nft_count;
+            } 
+            if ((nft_count == 10) & (return_item == -1)) {
+                start_from = 0;
             }
             if (return_item == 0) {
                 start_from = now();
@@ -289,10 +290,11 @@ cell subtract_dictionaries(cell self, cell other) {
             int nft_count = data~load_uint(16);
             int start_from = data~load_uint(64);
             int extra_reward = data~load_coins();
-            if ((nft_count == 10) & (return_item == 1)) {
-                start_from = 0;
-            } elseif ((nft_count >= 11) | ((nft_count >= 10) & (return_item == 1))) {
+            if (nft_count >= 10) {
                 extra_reward += (now() - start_from) * boost_reward * nft_count;
+            } 
+            if ((nft_count == 10) & (return_item == -1)) {
+                start_from = 0;
             }
             if (return_item == 0) {
                 start_from = now();
@@ -311,7 +313,6 @@ cell subtract_dictionaries(cell self, cell other) {
             .end_cell().begin_parse();
             data::users~dict_set(267, staker, data);
         }
-
         send_raw_message(begin_cell()
             .store_uint(0x18, 6)
             .store_slice(jetton_wallet_address)
@@ -319,7 +320,7 @@ cell subtract_dictionaries(cell self, cell other) {
             .store_uint(0, 107)
             .store_uint(op::jetton::transfer, 32)
             .store_uint(context::query_id, 64)
-            .store_coins(amount + extra_reward)
+            .store_coins(amount + extra_amount)
             .store_slice(staker)
             .store_uint(0, 8)
         .end_cell(), 1);
