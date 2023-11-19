@@ -1,6 +1,6 @@
 _ common_reward:Coins boost_reward:Coins = Reward
 
-_ nft_count:uint16 start_from:uint64 extra_reward:Coins = UserData;
+_ common_nft_count:uint16 common_start_from:uint64 common_extra_reward:Coins uncommon_nft_count:uint16 uncommon_start_from:uint64 uncommon_extra_reward:Coins= UserData;
 
 _ items:(HashmapE 267 uint16) Rarity:(HashmapE 16 Reward) Users:(HashmapE 267 UserData) staked_items:(HashmapE 267 MsgAddressInt) jetton_master:MsgAddressInt jetton_wallet_code:^Cell helper_code:^Cell admin:MsgAddressInt valid_until:uint64 = StakingMasterStorage;
 _ master:MsgAddressInt item:MsgAddressInt staker:MsgAddressInt staked_at:uint64 claimed_at:uint64 option:uint8 = StakingHelperStorage;
