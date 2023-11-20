@@ -207,25 +207,6 @@ export class StakingMaster implements Contract {
         return StakingHelper.createFromAddress(stack.readAddress());
     }
 
-    async getStakedItems(provider: ContractProvider): Promise<Dictionary<Address, Address>> {
-        const stack = (await provider.get('get_staked_items', [])).stack;
-        const d = stack.readCellOpt();
-        if (d) {
-            return d.beginParse().loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.Address());
-        }
-        return Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.Address());
-    }
-
-    async getItemsStakedByUser(provider: ContractProvider, user: Address): Promise<Address[]> {
-        const dict = await this.getStakedItems(provider);
-        for (const [key, value] of dict) {
-            if (!value.equals(user)) {
-                dict.delete(key);
-            }
-        }
-        return dict.keys();
-    }
-
     async getEstimatedRewards(provider: ContractProvider, item: Address, timePassed: number): Promise<bigint> {
         const stack = (
             await provider.get('get_estimated_reward', [
@@ -236,34 +217,55 @@ export class StakingMaster implements Contract {
         return stack.readBigNumber();
     }
 
-    async getItems(provider: ContractProvider): Promise<Dictionary<Address, bigint>> {
-        const stack = (await provider.get('get_items', [])).stack;
-        let d = stack.readCellOpt();
-        if (d) {
-            return d.beginParse().loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.BigVarUint(4));
-        } else {
-            return Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigVarUint(4));
-        }
-    }
-
-    async getDictionaries(provider: ContractProvider): Promise<{
+    async getContractData(provider: ContractProvider): Promise<{
         items: Dictionary<Address, bigint>;
         rarity: Dictionary<bigint, Reward>;
         users: Dictionary<Address, UserData>;
         stakedItems: Dictionary<Address, Address>;
+        jettonMaster: Address;
+        jettonWalletCode: Cell;
+        helperCode: Cell;
+        admin: Address;
+        validUntil: bigint;
     }> {
-        const result = (await provider.get('get_dictionaries', [])).stack;
+        const stack = (await provider.get('get_contract_data', [])).stack;
         return {
-            items: result
-                .readCell()
-                .beginParse()
-                .loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16)),
-            rarity: result.readCell().beginParse().loadDictDirect(Dictionary.Keys.BigUint(16), createRewardValue()),
-            users: result.readCell().beginParse().loadDictDirect(Dictionary.Keys.Address(), createUserDataValue()),
-            stakedItems: result
-                .readCell()
-                .beginParse()
-                .loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.Address()),
+            items:
+                stack
+                    .readCellOpt()
+                    ?.beginParse()
+                    .loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16)) ??
+                Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.BigUint(16)),
+            rarity:
+                stack.readCellOpt()?.beginParse().loadDictDirect(Dictionary.Keys.BigUint(16), createRewardValue()) ??
+                Dictionary.empty(Dictionary.Keys.BigUint(16), createRewardValue()),
+            users:
+                stack.readCellOpt()?.beginParse().loadDictDirect(Dictionary.Keys.Address(), createUserDataValue()) ??
+                Dictionary.empty(Dictionary.Keys.Address(), createUserDataValue()),
+            stakedItems:
+                stack
+                    .readCellOpt()
+                    ?.beginParse()
+                    .loadDictDirect(Dictionary.Keys.Address(), Dictionary.Values.Address()) ??
+                Dictionary.empty(Dictionary.Keys.Address(), Dictionary.Values.Address()),
+            jettonMaster: stack.readAddress(),
+            jettonWalletCode: stack.readCell(),
+            helperCode: stack.readCell(),
+            admin: stack.readAddress(),
+            validUntil: stack.readBigNumber(),
         };
+    }
+
+    async getItemsStakedByUser(
+        provider: ContractProvider,
+        user: Address,
+        dict: Dictionary<Address, Address>
+    ): Promise<Address[]> {
+        for (const [key, value] of dict) {
+            if (!value.equals(user)) {
+                dict.delete(key);
+            }
+        }
+        return dict.keys();
     }
 }

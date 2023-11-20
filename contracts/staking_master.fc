@@ -404,11 +404,6 @@ slice get_helper_address(slice item) method_id {
     return address;
 }
 
-cell get_staked_items() method_id {
-    load_data();
-    return data::staked_items;
-}
-
 int get_estimated_reward(slice item, int time_passed) method_id {
     load_data();
     (slice value, int f?) = data::items.dict_get?(267, item);
@@ -420,12 +415,7 @@ int get_estimated_reward(slice item, int time_passed) method_id {
     return amount;
 }
 
-cell get_items() method_id {
+(cell, cell, cell, cell, slice, cell, cell, slice, int) get_contract_data() method_id {
     load_data();
-    return data::items;
-}
-
-(cell, cell, cell, cell) get_dictionaries() method_id {
-    load_data();
-    return (data::items, data::rarity, data::users, data::staked_items);
+    return (data::items, data::rarity, data::users, data::staked_items, data::jetton_master, data::jetton_wallet_code, data::helper_code, data::admin, data::valid_until);
 }
