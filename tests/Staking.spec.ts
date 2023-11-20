@@ -6,6 +6,35 @@ import { compile } from '@ton/blueprint';
 import { JettonMinter } from '../wrappers/JettonMinter';
 import { NFTCollection } from '../wrappers/NFTCollection';
 import { JettonWallet } from '../wrappers/JettonWallet';
+import { randomAddress } from '@ton/test-utils';
+
+expect.extend({
+    toEqualDict(received: Dictionary<any, any>, expected: Dictionary<any, any>) {
+        const pass = beginCell()
+            .storeDictDirect(received)
+            .endCell()
+            .equals(beginCell().storeDictDirect(expected).endCell());
+        if (pass) {
+            return {
+                message: () => `expected ${received} not to equal ${expected}`,
+                pass: true,
+            };
+        } else {
+            return {
+                message: () => `expected ${received} to equal ${expected}`,
+                pass: false,
+            };
+        }
+    },
+});
+
+declare global {
+    namespace jest {
+        interface Matchers<R> {
+            toEqualDict(expected: Dictionary<any, any>): CustomMatcherResult;
+        }
+    }
+}
 
 describe('Staking', () => {
     let codeMaster: Cell;
@@ -1069,6 +1098,40 @@ describe('Staking', () => {
                     toNano('0.001') * BigInt(86400 * 7) * 10n
             );
             expect((await stakingMaster.getContractData()).stakedItems.keys()).toHaveLength(0);
+        }
+    });
+
+    it('should change valid until by admin', async () => {
+        {
+            expect((await stakingMaster.getContractData()).validUntil).toEqual(1800000000n);
+
+            await stakingMaster.sendAdminChangeValidUntil(users[0].getSender(), toNano('0.05'), 123n, 1800000010n);
+
+            expect((await stakingMaster.getContractData()).validUntil).toEqual(1800000010n);
+        }
+    });
+
+    it('should change rarity by admin', async () => {
+        {
+            await stakingMaster.sendAdminRemoveRarity(
+                users[0].getSender(),
+                toNano('0.05'),
+                123n,
+                (
+                    await stakingMaster.getContractData()
+                ).rarity
+            );
+
+            expect((await stakingMaster.getContractData()).rarity.keys.length).toEqual(0);
+
+            let rarities = Dictionary.empty(Dictionary.Keys.BigUint(16), createRewardValue());
+            rarities.set(123n, {
+                boostReward: toNano('0.001'),
+                commonReward: toNano('0.001'),
+            });
+            await stakingMaster.sendAdminAddRarity(users[0].getSender(), toNano('0.05'), 123n, rarities);
+
+            expect((await stakingMaster.getContractData()).rarity).toEqualDict(rarities);
         }
     });
 });

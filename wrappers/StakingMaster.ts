@@ -161,7 +161,7 @@ export class StakingMaster implements Contract {
         via: Sender,
         value: bigint,
         queryId: bigint,
-        rarity: Dictionary<Address, Reward>
+        rarity: Dictionary<bigint, Reward>
     ) {
         await provider.internal(via, {
             value,
@@ -175,7 +175,7 @@ export class StakingMaster implements Contract {
         via: Sender,
         value: bigint,
         queryId: bigint,
-        rarity: Dictionary<Address, Reward>
+        rarity: Dictionary<bigint, Reward>
     ) {
         await provider.internal(via, {
             value,
