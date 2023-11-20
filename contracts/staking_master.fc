@@ -70,20 +70,20 @@ global slice context::sender;
     return (stateinit, address);
 }
 
-cell merge_dictionaries(cell self, cell other) {
-    (slice key, slice value, int f?) = other.dict_get_min?(267);
+cell merge_dictionaries(cell self, cell other, int key_length) {
+    (slice key, slice value, int f?) = other.dict_get_min?(key_length);
     while (f?) {
-        self~dict_set(267, key, value);
-        (key, value, f?) = other.dict_get_next?(267, key);
+        self~dict_set(key_length, key, value);
+        (key, value, f?) = other.dict_get_next?(key_length, key);
     }
     return self;
 }
 
-cell subtract_dictionaries(cell self, cell other) {
-    (slice key, slice value, int f?) = other.dict_get_min?(267);
+cell subtract_dictionaries(cell self, cell other, int key_length) {
+    (slice key, slice value, int f?) = other.dict_get_min?(key_length);
     while (f?) {
-        self~dict_delete?(267, key);
-        (key, value, f?) = other.dict_get_next?(267, key);
+        self~dict_delete?(key_length, key);
+        (key, value, f?) = other.dict_get_next?(key_length, key);
     }
     return self;
 }
@@ -94,22 +94,10 @@ cell subtract_dictionaries(cell self, cell other) {
     }
     (slice data, int f?) = data::users.dict_get?(267, user);
     if (~ f?) {
-        data::users~dict_set(267, user, begin_cell()
-            .store_uint(0, 16)
-            .store_uint(0, 64)
-            .store_coins(0)
-            .store_uint(0, 16)
-            .store_uint(0, 64)
-            .store_coins(0)
-        .end_cell().begin_parse());
         data = begin_cell()
-            .store_uint(0, 16)
-            .store_uint(0, 64)
-            .store_coins(0)
-            .store_uint(0, 16)
-            .store_uint(0, 64)
-            .store_coins(0)
+            .store_uint(0, 168)
         .end_cell().begin_parse();
+        data::users~dict_set(267, user, data);
     }
     int nft_count = data~load_uint(16);
     int start_from = data~load_uint(64);
@@ -373,28 +361,28 @@ cell subtract_dictionaries(cell self, cell other) {
         throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
 
         cell items = in_msg_body~load_dict();
-        data::items = merge_dictionaries(data::items, items);
+        data::items = merge_dictionaries(data::items, items, 267);
     }
 
     elseif (context::op == op::admin_remove_items) {
         throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
 
         cell items = in_msg_body~load_dict();
-        data::items = subtract_dictionaries(data::items, items);
+        data::items = subtract_dictionaries(data::items, items, 267);
     }
 
     elseif (context::op == op::admin_add_rarity) {
         throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
 
         cell rarity = in_msg_body~load_dict();
-        data::rarity = merge_dictionaries(data::rarity, rarity);
+        data::rarity = merge_dictionaries(data::rarity, rarity, 16);
     }
 
     elseif (context::op == op::admin_remove_rarity) {
         throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
 
         cell rarity = in_msg_body~load_dict();
-        data::rarity = subtract_dictionaries(data::rarity, rarity);
+        data::rarity = subtract_dictionaries(data::rarity, rarity, 16);
     }
 
     elseif(context::op == op::admin_change_valid_until) {
