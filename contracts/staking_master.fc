@@ -332,7 +332,14 @@ cell subtract_dictionaries(cell self, cell other, int key_length) {
             send_raw_message(begin_cell()
                 .store_uint(0x10, 6)
                 .store_slice(data::admin)
-                .store_coins((option == 30) ? 250000000 : 300000000)
+                .store_coins(300000000)
+                .store_uint(0, 107)
+            .end_cell(), 1);
+        } else {
+            send_raw_message(begin_cell()
+                .store_uint(0x10, 6)
+                .store_slice(data::admin)
+                .store_coins(100000000)
                 .store_uint(0, 107)
             .end_cell(), 1);
         }
