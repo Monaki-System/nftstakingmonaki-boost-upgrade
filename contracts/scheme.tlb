@@ -14,6 +14,7 @@ claim#75938797 query_id:uint64 return_item:Bool = InternalMsgBody;
 request_claim#1c3e2695 query_id:uint64 return_item:Bool item:MsgAddressInt staker:MsgAddressInt option:uint8 time_passed:uint64 = InternalMsgBody;
 
 admin_jettons_withdrawal#4fa096c8 query_id:uint64 amount:Coins = InternalMsgBody;
+admin_ton_withdrawal#2423d56a query_id:uint64 = InternalMsgBody;
 admin_add_items#6d9a7414 query_id:uint64 items:(HashmapE 267 uint16) = InternalMsgBody;
 admin_remove_items#6d42583f query_id:uint64 items:(HashmapE 267 uint16) = InternalMsgBody;
 admin_add_rarity#cd2899a query_id:uint64 rarity:(HashmapE 267 Reward) = InternalMsgBody;

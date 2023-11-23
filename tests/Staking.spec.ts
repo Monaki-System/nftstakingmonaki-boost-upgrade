@@ -1211,4 +1211,18 @@ describe('Staking', () => {
             });
         }
     });
+
+    it('should withdraw stuck toncoin from contract by admin', async () => {
+        {
+            const balanceBefore = (await blockchain.getContract(stakingMaster.address)).balance;
+            const result = await stakingMaster.sendAdminTonWithdrawal(users[0].getSender(), toNano('0.05'), 123n);
+            expect(result.transactions).toHaveTransaction({
+                from: stakingMaster.address,
+                to: users[0].address,
+            });
+            expect(result.transactions).toHaveLength(3);
+            const balanceAfter = (await blockchain.getContract(stakingMaster.address)).balance;
+            expect(balanceAfter).toEqual(toNano('0.05'));
+        }
+    });
 });

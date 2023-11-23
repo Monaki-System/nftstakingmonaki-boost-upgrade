@@ -364,6 +364,19 @@ cell subtract_dictionaries(cell self, cell other, int key_length) {
         .end_cell(), 64);
     }
 
+    elseif (context::op == op::admin_ton_withdrawal) {
+        throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
+        
+        raw_reserve(50000000, 0);
+        
+        send_raw_message(begin_cell()
+            .store_uint(0x10, 6)
+            .store_slice(data::admin)
+            .store_coins(0)
+            .store_uint(0, 107)
+        .end_cell(), 128);
+    }
+
     elseif (context::op == op::admin_add_items) {
         throw_unless(error::wrong_sender, equal_slices(context::sender, data::admin));
 

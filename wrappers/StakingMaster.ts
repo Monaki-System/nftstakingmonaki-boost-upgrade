@@ -198,6 +198,14 @@ export class StakingMaster implements Contract {
         });
     }
 
+    async sendAdminTonWithdrawal(provider: ContractProvider, via: Sender, value: bigint, queryId: bigint) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(0x2423d56a, 32).storeUint(queryId, 64).endCell(),
+        });
+    }
+
     async getHelper(provider: ContractProvider, item: Address): Promise<StakingHelper> {
         const stack = (
             await provider.get('get_helper_address', [

@@ -3,6 +3,7 @@ const int op::process_stake = 0x654c3af3;
 const int op::claim = 0x75938797;
 const int op::request_claim = 0x1c3e2695;
 const int op::admin_jettons_withdrawal = 0x4fa096c8;
+const int op::admin_ton_withdrawal = 0x2423d56a;
 const int op::admin_add_items = 0x6d9a7414;
 const int op::admin_remove_items = 0x6d42583f;
 const int op::admin_add_rarity = 0xcd2899a;
