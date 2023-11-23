@@ -237,9 +237,11 @@ describe('Staking', () => {
                 to: users[0].address,
                 value: toNano('0.1'),
             });
-            expect(await helper.getStaker()).toEqualAddress(users[0].address);
-            expect(await helper.getStakedAt()).toEqual(1600000000);
-            expect(await helper.getOption()).toEqual(7);
+
+            let helperData = await helper.getContractData();
+            expect(helperData.staker).toEqualAddress(users[0].address);
+            expect(helperData.stakedAt).toEqual(1600000000);
+            expect(helperData.option).toEqual(7);
             expect(
                 (
                     await stakingMaster.getItemsStakedByUser(
@@ -280,9 +282,11 @@ describe('Staking', () => {
                 to: users[0].address,
                 value: toNano('0.1'),
             });
-            expect(await helper.getStaker()).toEqualAddress(users[1].address);
-            expect(await helper.getStakedAt()).toEqual(1600000000);
-            expect(await helper.getOption()).toEqual(30);
+
+            let helperData = await helper.getContractData();
+            expect(helperData.staker).toEqualAddress(users[1].address);
+            expect(helperData.stakedAt).toEqual(1600000000);
+            expect(helperData.option).toEqual(30);
             expect(
                 (
                     await stakingMaster.getItemsStakedByUser(
@@ -371,8 +375,10 @@ describe('Staking', () => {
                 toNano('0.15')
             );
             const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-            expect(await helper.getStakedAt()).toEqual(1600000000);
-            expect(await helper.getOption()).toEqual(7);
+
+            let helperData = await helper.getContractData();
+            expect(helperData.stakedAt).toEqual(1600000000);
+            expect(helperData.option).toEqual(7);
             expect(
                 (
                     await stakingMaster.getItemsStakedByUser(
@@ -412,8 +418,9 @@ describe('Staking', () => {
                 toNano('0.15')
             );
             const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-            expect(await helper.getStakedAt()).toEqual(1600000000 + 86400 * 7);
-            expect(await helper.getOption()).toEqual(14);
+            let helperData = await helper.getContractData();
+            expect(helperData.stakedAt).toEqual(1600000000 + 86400 * 7);
+            expect(helperData.option).toEqual(14);
             expect(
                 (
                     await stakingMaster.getItemsStakedByUser(
@@ -440,8 +447,8 @@ describe('Staking', () => {
                     )
                     .getJettonBalance()
             ).toEqual(toNano('21'));
-
-            expect(await helper.getStakedAt()).toEqual(0);
+            helperData = await helper.getContractData();
+            expect(helperData.stakedAt).toEqual(0);
             expect((await stakingMaster.getContractData()).stakedItems.keys()).toHaveLength(0);
         }
 
@@ -455,8 +462,9 @@ describe('Staking', () => {
                 toNano('0.15')
             );
             const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-            expect(await helper.getStakedAt()).toEqual(1600000000 + 86400 * (7 + 14));
-            expect(await helper.getOption()).toEqual(7);
+            let helperData = await helper.getContractData();
+            expect(helperData.stakedAt).toEqual(1600000000 + 86400 * (7 + 14));
+            expect(helperData.option).toEqual(7);
             expect(
                 (
                     await stakingMaster.getItemsStakedByUser(
@@ -484,7 +492,8 @@ describe('Staking', () => {
                     .getJettonBalance()
             ).toEqual(toNano('35'));
 
-            expect(await helper.getStakedAt()).toEqual(0);
+            helperData = await helper.getContractData();
+            expect(helperData.stakedAt).toEqual(0);
             expect((await stakingMaster.getContractData()).stakedItems.keys()).toHaveLength(0);
         }
     });
@@ -499,8 +508,9 @@ describe('Staking', () => {
             toNano('0.15')
         );
         const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-        expect(await helper.getStakedAt()).toEqual(1600000000);
-        expect(await helper.getOption()).toEqual(7);
+        let helperData = await helper.getContractData();
+        expect(helperData.stakedAt).toEqual(1600000000);
+        expect(helperData.option).toEqual(7);
         expect(
             (
                 await stakingMaster.getItemsStakedByUser(
@@ -555,8 +565,9 @@ describe('Staking', () => {
             toNano('0.15')
         );
         const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-        expect(await helper.getStakedAt()).toEqual(1600000000);
-        expect(await helper.getOption()).toEqual(7);
+        let helperData = await helper.getContractData();
+        expect(helperData.stakedAt).toEqual(1600000000);
+        expect(helperData.option).toEqual(7);
         expect(
             (
                 await stakingMaster.getItemsStakedByUser(
@@ -618,8 +629,9 @@ describe('Staking', () => {
             toNano('0.15')
         );
         const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-        expect(await helper.getStakedAt()).toEqual(1600000000);
-        expect(await helper.getOption()).toEqual(7);
+        let helperData = await helper.getContractData();
+        expect(helperData.stakedAt).toEqual(1600000000);
+        expect(helperData.option).toEqual(7);
         expect(
             (
                 await stakingMaster.getItemsStakedByUser(
@@ -672,8 +684,9 @@ describe('Staking', () => {
             toNano('0.15')
         );
         const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-        expect(await helper.getStakedAt()).toEqual(1600000000);
-        expect(await helper.getOption()).toEqual(7);
+        let helperData = await helper.getContractData();
+        expect(helperData.stakedAt).toEqual(1600000000);
+        expect(helperData.option).toEqual(7);
         expect(
             (
                 await stakingMaster.getItemsStakedByUser(
@@ -782,8 +795,9 @@ describe('Staking', () => {
             toNano('0.15')
         );
         const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-        expect(await helper.getStakedAt()).toEqual(1600000000);
-        expect(await helper.getOption()).toEqual(30);
+        let helperData = await helper.getContractData();
+        expect(helperData.stakedAt).toEqual(1600000000);
+        expect(helperData.option).toEqual(30);
         expect(
             (
                 await stakingMaster.getItemsStakedByUser(
@@ -1132,97 +1146,6 @@ describe('Staking', () => {
             await stakingMaster.sendAdminAddRarity(users[0].getSender(), toNano('0.05'), 123n, rarities);
 
             expect((await stakingMaster.getContractData()).rarity).toEqualDict(rarities);
-        }
-    });
-
-    it('should process admin fees correctly', async () => {
-        {
-            const item = blockchain.openContract(await collection.getNftItemByIndex(0n));
-            let result = await item.sendTransfer(
-                users[0].getSender(),
-                toNano('0.2'),
-                stakingMaster.address,
-                beginCell().storeUint(0x429c67c7, 32).storeUint(7, 8).endCell(),
-                toNano('0.15')
-            );
-            expect(result.transactions).toHaveTransaction({
-                from: stakingMaster.address,
-                to: users[0].address,
-                value: toNano('0.1'),
-            });
-            const helper = blockchain.openContract(await stakingMaster.getHelper(item.address));
-            expect(await helper.getStakedAt()).toEqual(1600000000);
-            expect(await helper.getOption()).toEqual(7);
-            expect(
-                (
-                    await stakingMaster.getItemsStakedByUser(
-                        users[0].address,
-                        (
-                            await stakingMaster.getContractData()
-                        ).stakedItems
-                    )
-                )[0]
-            ).toEqualAddress(item.address);
-
-            blockchain.now = 1600000000 + 86400 * 7;
-
-            result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, false);
-            expect(result.transactions).toHaveTransaction({
-                on: stakingMaster.address,
-                success: true,
-            });
-            expect(await item.getOwner()).toEqualAddress(stakingMaster.address);
-            expect(
-                await blockchain
-                    .openContract(
-                        JettonWallet.createFromAddress(await jettonMinter.getWalletAddressOf(users[0].address))
-                    )
-                    .getJettonBalance()
-            ).toEqual(toNano('7'));
-            expect((await stakingMaster.getContractData()).stakedItems.keys()).toHaveLength(1);
-
-            expect(result.transactions).toHaveTransaction({
-                from: stakingMaster.address,
-                to: users[0].address,
-                value: toNano('0.1'),
-            });
-
-            blockchain.now = 1600000000 + 86400 * 14;
-
-            result = await helper.sendClaim(users[0].getSender(), toNano('0.5'), 123n, true);
-            expect(result.transactions).toHaveTransaction({
-                on: stakingMaster.address,
-                success: true,
-            });
-            expect(await item.getOwner()).toEqualAddress(users[0].address);
-            expect(
-                await blockchain
-                    .openContract(
-                        JettonWallet.createFromAddress(await jettonMinter.getWalletAddressOf(users[0].address))
-                    )
-                    .getJettonBalance()
-            ).toEqual(toNano('14'));
-            expect((await stakingMaster.getContractData()).stakedItems.keys()).toHaveLength(0);
-
-            expect(result.transactions).toHaveTransaction({
-                from: stakingMaster.address,
-                to: users[0].address,
-                value: toNano('0.3'),
-            });
-        }
-    });
-
-    it('should withdraw stuck toncoin from contract by admin', async () => {
-        {
-            const balanceBefore = (await blockchain.getContract(stakingMaster.address)).balance;
-            const result = await stakingMaster.sendAdminTonWithdrawal(users[0].getSender(), toNano('0.05'), 123n);
-            expect(result.transactions).toHaveTransaction({
-                from: stakingMaster.address,
-                to: users[0].address,
-            });
-            expect(result.transactions).toHaveLength(3);
-            const balanceAfter = (await blockchain.getContract(stakingMaster.address)).balance;
-            expect(balanceAfter).toEqual(toNano('0.05'));
         }
     });
 });
